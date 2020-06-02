@@ -41,7 +41,10 @@ export default class Searchscreen extends React.Component {
   }
 
     searchTransactions= async(text) =>{
-      var enteredText = text.split("")  
+      var enteredText = text.split("")
+      var text = text.toUpperCase()
+  
+      
       if (enteredText[0].toUpperCase() ==='B'){
         const transaction =  await db.collection("transactions").where('bookId','==',text).get()
         transaction.docs.map((doc)=>{

@@ -1,101 +1,96 @@
 import React from 'react';
-import {View, StyleSheet,Text,KeyboardAvoidingView,Image,TextInput,TouchableOpacity, Alert} from 'react-native'
+import {View,Text,StyleSheet,Image,TextInput,TouchableOpacity,Alert,KeyboardAvoidingView} from 'react-native';
+import * as firebase from 'firebase'
+export default class LoginScreen extends React.Component {
 
-
-
-export default class LoginScreen extends React.Componenet{
     constructor(){
-        super()
-        this.state = ({
-            emailId: '',
-            password:' '
-        })
-    }
-    Login = async (emailId,password)=>{
-        if (emailId && password){
-        try {
-            const response = await firebase.auth().signInWithEmailAndPassword(emailId,password)
-           if (response){
-               this.props.navigation.navigate('Transaction')
-           } 
+        super();
+        this.state={
+          emailId : '',
+          password: ''
         }
-        catch (error){
-            switch (error.code){
-                case 'auth/user-notFound':
-                Alert.alert('USER DOES NOT EXIST')
-                break ;
-                case 'auth/invalid-email':
-                    Alert.alert("INCORRECT EMAIL OR PASSWORD")
-
+      }
+    
+      login=async(email,password)=>{
+        if (email && password){
+          try{
+            const response = await firebase.auth().signInWithEmailAndPassword(email,password)
+            if(response){
+              this.props.navigation.navigate('Transaction')
             }
+          }
+          catch(error){
+            switch (error.code) {
+              case 'auth/user-not-found':
+                Alert.alert("user dosen't exists")
+                console.log("doesn't exist")
+                break
+              case 'auth/invalid-email':
+                Alert.alert('incorrect email or password')
+                console.log('invaild')
+                break
+            }
+          }
         }
+        else{
+            Alert.alert('enter email and password');
         }
-        else {
-            Alert.alert("ENTER EMAIL AND PASSWORD")
-        }
-    }
-    render (){
-    return(
-        <View style ={styles.loginBox}>
-            <Text>LOGIN SCREEN</Text>
+      }
+
+  render(){
+      return(
+        <KeyboardAvoidingView style = {{alignItems:'center',marginTop:20}}>
+        <View>
+          <Image
+            source={require("../assets/booklogo.jpg")}
+            style={{width:200, height: 200}}/>
+          <Text style={{textAlign: 'center', fontSize: 30}}>Wily</Text>
         </View>
-    )
-}
-}
-<KeyboardAvoidingView style = {{alignItems:'center', marginTop: 20}}>
-    <View>
-      <Image
-      source = {require("../assets/booklogo.jpg")}
-      style = {{width: 200, height:200}}
-      />  
-      <Text style = {{textAlign: 'center',fontSize:30}}>WILY APP</Text>
-    </View>
-    <View>
-    <TextInput
-    style = {styles.loginBox}
-    placeholder = 'abc@example.com'
-    keyboardType = 'email-address'
-    onChangeText = {()=>(
-        this.setState ({
-            emailId: text,
-        })
-    )}
-      
-    />
-    <TextInput
-    style = {styles.loginBox}
-    secureTextEntry = {true}
-    placeholder = 'Password'
-    onChangeText = {()=>(
-        this.setState ({
-        password: text
-    })
-    )}
-    />
+        <View>
+        <TextInput
+          style={styles.loginBox}
+          placeholder="abc@example.com"
+          keyboardType ='email-address'
+          onChangeText={(text)=>{
+            this.setState({
+              emailId: text
+            })
+          }}
+        />
 
-     
-    </View>
+        <TextInput
+          style={styles.loginBox}
+          secureTextEntry = {true}
+          placeholder="enter Password"
+          onChangeText={(text)=>{
+            this.setState({
+              password: text
+            })
+          }}
+        />
+        </View>
+        <View>
+          <TouchableOpacity style={{height:30,width:90,borderWidth:1,marginTop:20,paddingTop:5,borderRadius:7}}
+          onPress={()=>{this.login(this.state.emailId ,this.state.password)}}>
+            <Text style={{textAlign:'center'}}>Login</Text>
+          </TouchableOpacity>
 
-    <View>
-        <TouchableOpacity style = {{height:30,width:90,borderWidth:1.5,marginTop:20,paddingTop :5,boderRadius:20}}
-        onPress = {()=>{
-            this.Login(this.state.email-Id, this.state.password)
-            
-        }}
-        
-        >
-        <Text style ={{textAlign:'center'}}>LOGIN</Text>
-        </TouchableOpacity>
-    </View>
-</KeyboardAvoidingView>
+        </View>
+      </KeyboardAvoidingView>
+
+      )
+  }
+}
+
 
 const styles = StyleSheet.create({
-    loginBox:{
-        width:300,
-        height:40,
-        borderWidth:1.5,
-        fontSize:20,
-        margin:10,
-        paddingLeft:10
-    }
+  loginBox:
+  {
+    width: 300,
+  height: 40,
+  borderWidth: 1.5,
+  fontSize: 20,
+  margin:10,
+  paddingLeft:10
+  }
 })

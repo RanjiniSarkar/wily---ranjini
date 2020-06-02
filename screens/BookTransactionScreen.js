@@ -1,12 +1,5 @@
 import React from 'react';
-import { Text,
-   View,
-   TouchableOpacity,
-   TextInput,
-   Image,
-   StyleSheet,
-  KeyboardAvoidingView ,
-ToastAndroid,Alert} from 'react-native';
+import { Text, View, TouchableOpacity, TextInput, Image, StyleSheet, KeyboardAvoidingView, Alert } from 'react-native';
 import * as Permissions from 'expo-permissions';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import * as firebase from 'firebase'
@@ -57,31 +50,6 @@ export default class TransactionScreen extends React.Component {
       }
       
     }
-     initiateBookReturn = async()=>{
-      //add a transaction
-      db.collection("transactions").add({
-        'studentId': this.state.scannedStudentId,
-        'bookId' : this.state.scannedBookId,
-        'date' : firebase.firestore.Timestamp.now().toDate(),
-        'transactionType': "Return"
-      })
-      //change book status
-      db.collection("books").doc(this.state.scannedBookId).update({
-        'bookAvailability': true
-      })
-      //change number  of issued books for student
-      db.collection("students").doc(this.state.scannedStudentId).update({
-        'numberOfBooksIssued': firebase.firestore.FieldValue.increment(-1)
-      })
-      Alert.alert("Book Issued")
-      this.setState=({
-        scannedStudentId:'',
-        scannedBookId:''
-      })
-      
-    }
-
-
 
     initiateBookIssue = async()=>{
       //add a transaction
@@ -99,104 +67,144 @@ export default class TransactionScreen extends React.Component {
       db.collection("students").doc(this.state.scannedStudentId).update({
         'numberOfBooksIssued': firebase.firestore.FieldValue.increment(1)
       })
-      Alert.alert("Book Returned")
-      this.setState = ({
-        scannedBookId: '',
-        scannedStudentId:''
+
+      Alert.alert("Book issued!")
+
+      this.setState({
+        scannedStudentId: '',
+        scannedBookId: ''
       })
     }
 
-   checkBookEligibility = async()=>{
-     const bookRef = await db.collection('books').where('bookId', '==',this.scannedBookId).get()
-     var transactionType = " "
-     if(bookRef.docs.length == 0){
-       transactionType= 'false';
-     }
-     else{
-       bookRef.docs.map((doc)=>{
-         var book = doc.data()
-         if(book.bookAvailability)
-         transactionType = 'Issue'
-         else
-         transactionType = 'Return'
-       })
-     }
-     return transactionType;
-   }
-   checkStudentEligibilityForBookIssue = async()=>{
-     const studentRef = await db.collection('students').where('studentId', '==',this.state.scannedStudentId).get()
-     var isStudentEligible = ''
-     if(studentRef.docs.length == 0){
-       this.setState({
-         scannedBookId:'',
-         scannedStudentId: ''
-       })
-       isStudentEligible = false
-       Alert.alert("THE STUDENT ID DOESN'T EXIST IN THE DATABASE!")
-      }
+    initiateBookReturn = async()=>{
+      //add a transaction
+      db.collection("transactions").add({
+        'studentId': this.state.scannedStudentId,
+        'bookId' : this.state.scannedBookId,
+        'date' : firebase.firestore.Timestamp.now().toDate(),
+        'transactionType': "Return"
+      })
+      //change book status
+      db.collection("books").doc(this.state.scannedBookId).update({
+        'bookAvailability': true
+      })
+      //change number  of issued books for student
+      db.collection("students").doc(this.state.scannedStudentId).update({
+        'numberOfBooksIssued': firebase.firestore.FieldValue.increment(-1)
+      })
 
+      this.setState({
+        scannedStudentId: '',
+        scannedBookId: ''
+      })
+    }
+
+    checkBookEligibility = async()=>{
+      const bookRef = await db.collection("books").where("bookId","==",this.state.scannedBookId).get()
+      var transactionType = ""
+      if(bookRef.docs.length == 0){
+        transactionType = "false";
+        console.log(bookRef.docs.length)
+      }
       else{
-        studentRef.docs.map((docs)=>{
-          var student = doc.data();
-          if(student.numberOfBooksIssued < 2){
-            isStudentEligible = true
-          }
-          else{
-            isStudentEligible = false
-            Alert.alert("THE STUDENT HAS ALREADY ISSUED 2 BOOKS!")
-            this.setState= ({
-              scannedBookId:'',
-              scannedStudentId:''
-            })
-          }
-          
+        bookRef.docs.map((doc)=>{
+          var book = doc.data()
+          if (book.bookAvailability)
+            transactionType = "Issue"
+          else
+            transactionType = "Return"
           
         })
       }
-      return isStudentEligible
-   }
-   checkStudentEligibilityForBookReturn = async()=>{
-     const transactionRef = await db.collection('transaction').where('bookId','==',this.state.scannedBookId).limit(1).get()
-     var isStudentEligible = ""
-     transactionRef.docs.map((doc)=>{
-       var lastBookTransaction = doc.data();
-       if(lastBookTransaction.studentId === this.scannedStudentId)
-       isStudentEligible = true
-       else{
-         isStudentEligible = false
-         Alert.alert("THE BOOK WASN'T ISSUED BY THIS STUDENT")
-         this.setState=({
-        scannedBookId:'',
-        scannedStudentId:''
 
-         })
-       }
-     })
-     return isStudentEligible
-   }
+      return transactionType
+      
+    }
+
+    checkStudentEligibilityForBookIssue = async()=>{
+      const studentRef = await db.collection("students").where("studentId","==",this.state.scannedStudentId).get()
+      var isStudentEligible = ""
+      if(studentRef.docs.length == 0){
+        this.setState({
+          scannedStudentId: '',
+          scannedBookId: ''
+        })
+        isStudentEligible = false
+        Alert.alert("The student id doesn't exist in the database!")
+      }
+      else{
+         studentRef.docs.map((doc)=>{
+            var student = doc.data();
+            if(student.numberOfBooksIssued < 2){
+              isStudentEligible = true
+            }
+            else{
+              isStudentEligible = false
+              Alert.alert("The student has already issued 2 books!")
+              this.setState({
+                scannedStudentId: '',
+                scannedBookId: ''
+              })
+            }
+
+          })
+
+      }
+
+      return isStudentEligible
+
+    }
+
+    checkStudentEligibilityForReturn = async()=>{
+      const transactionRef = await db.collection("transactions").where("bookId","==",this.state.scannedBookId).limit(1).get()
+      var isStudentEligible = ""
+      transactionRef.docs.map((doc)=>{
+        var lastBookTransaction = doc.data();
+        if(lastBookTransaction.studentId === this.state.scannedStudentId)
+          isStudentEligible = true
+        else {
+          isStudentEligible = false
+          Alert.alert("The book wasn't issued by this student!")
+          this.setState({
+            scannedStudentId: '',
+            scannedBookId: ''
+          })
+        }
+          
+      })
+      return isStudentEligible
+    }
 
 
     handleTransaction = async()=>{
-     var transactionType = await this.checkBookEligibility();
-     if(!transactionType){
-       Alert.alert("THE BOOK DOES'NT EXIST IN THE LIBRARY DATABASE!");
-       this.setState({
-         scannedBookId:'',
-         scannedStudentId:''
-       })
-     }
-     else if( transactionType === "Issue"){
-       var isStudentEligible = await this.checkStudentEligibilityForBookIssue()
-       if(isStudentEligible)
-       this.initiateBookIssue()
-       Alert.alert("Book issued to the student!")
-     }
-     else{
-       var isStudentEligible= await this.checkStudentEligibilityForBookReturn()
-       if(isStudentEligible)
-       this.initiateBookReturn()
-       Alert.alert("Book returned to the library!")
-     }
+     //verify if the student is eligible for book issue or return or none
+            //student id exists in the database
+            //issue : number of book issued < 2
+            //issue: verify book availability
+            //return: last transaction -> book issued by the student id
+      var transactionType = await this.checkBookEligibility();
+      console.log("Transaction Type", transactionType)
+      if (!transactionType) {
+        Alert.alert("The book doesn't exist in the library database!")
+        this.setState({
+          scannedStudentId: '',
+          scannedBookId: ''
+        })
+      }
+
+      else if(transactionType === "Issue"){
+        var isStudentEligible = await this.checkStudentEligibilityForBookIssue()
+        if(isStudentEligible)
+          this.initiateBookIssue()
+          Alert.alert("Book issued to the student!")     
+      }
+
+      else{
+        var isStudentEligible = await this.checkStudentEligibilityForReturn()
+        if(isStudentEligible)
+          this.initiateBookReturn()
+          Alert.alert("Book returned to the library!")
+      }
     }
 
     render() {
@@ -215,7 +223,7 @@ export default class TransactionScreen extends React.Component {
 
       else if (buttonState === "normal"){
         return(
-          <KeyboardAvoidingView  style={styles.container} behavior="padding" enabled>
+          <KeyboardAvoidingView behavior="padding" style={styles.container}>
             <View>
               <Image
                 source={require("../assets/booklogo.jpg")}
@@ -226,7 +234,11 @@ export default class TransactionScreen extends React.Component {
             <TextInput 
               style={styles.inputBox}
               placeholder="Book Id"
-              onChangeText={text =>this.setState({scannedBookId:text})}
+              onChangeText={(text)=>{
+                this.setState({
+                  scannedBookId: text
+                })
+              }}
               value={this.state.scannedBookId}/>
             <TouchableOpacity 
               style={styles.scanButton}
@@ -241,7 +253,11 @@ export default class TransactionScreen extends React.Component {
             <TextInput 
               style={styles.inputBox}
               placeholder="Student Id"
-              onChangeText ={text => this.setState({scannedStudentId:text})}
+              onChangeText={(text)=>{
+                this.setState({
+                  scannedStudentId: text
+                })
+              }}
               value={this.state.scannedStudentId}/>
             <TouchableOpacity 
               style={styles.scanButton}
@@ -251,15 +267,14 @@ export default class TransactionScreen extends React.Component {
               <Text style={styles.buttonText}>Scan</Text>
             </TouchableOpacity>
             </View>
+            <Text style={styles.transactionAlert}>{this.state.transactionMessage}</Text>
             <TouchableOpacity
               style={styles.submitButton}
               onPress={async()=>{
                 var transactionMessage = this.handleTransaction();
-                this.setState(
-                  {scannedBookId:'',
-                   scannedStudentId:''})
+                console.log("Transaction Message: ",transactionMessage)
               }}>
-          <Text style={styles.submitButtonText}>Submit</Text>
+              <Text style={styles.submitButtonText}>Submit</Text>
             </TouchableOpacity>
           </KeyboardAvoidingView>
         );
@@ -315,5 +330,9 @@ export default class TransactionScreen extends React.Component {
       fontSize: 20,
       fontWeight:"bold",
       color: 'white'
+    },
+    transactionAlert:{
+      margin:10,
+      color: 'red'
     }
   });
